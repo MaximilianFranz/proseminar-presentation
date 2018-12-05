@@ -1,6 +1,24 @@
 
 \documentclass[18pt]{beamer}
 
+% \usepackage[english]{babel}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+% Drawing
+\usepackage{verbatim}
+\usepackage{tikz}
+\usepackage{tikz-uml} % UML Class Diagrams
+\tikzumlset{fill class=white}
+\usetikzlibrary{arrows.meta, positioning}
+
+
 \usetheme{kit}
 \titleimage{titleImage}
 \titlelogo{logos}
@@ -26,54 +44,247 @@
     \tableofcontents
 \end{frame}
 
-\section{Motivation and Problem} % (fold)
+\section{Motivation} % (fold)
 \label{sec:}
 \begin{frame}
     \frametitle{Why mine processes?}    
     \begin{itemize}
-	\item Bullet point 1
+	\item Validate exisiting process models
 	\pause
-	\item Bullet point 2
-	\item \dots
+	\item Gather new knowledge
 \end{itemize}
-\end{frame}
-
-
-\section{Notation and Basics} % (fold)
-\label{sec:notation_and_basics}
-\begin{frame}
-    \frametitle{Logs and Process Trees}    
-    \begin{itemize}
-	\item Bullet point 1
-	\pause
-	\item Bullet point 2
-	\item \dots
-\end{itemize}
-\begin{exampleblock}{Example 1}
-\begin{itemize}
-\item Bullet point 1
 \pause
-\item Bullet point 2
-\item \dots
-\end{itemize}
-\end{exampleblock}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Logs and Process Trees} 
-\begin{block}{Block 1}
+\begin{block}{Problem Statement}
 \begin{itemize}
-\item Bullet point 1
+\item Mine Process Model from a log of empirical data
 \pause
-\item Bullet point 2
-\item \dots
+\item Balance between 
+	\begin{itemize}
+		\item \emph{fitness}
+		\item \emph{simplicity}
+		\item \emph{generality}
+		\item \emph{precision}
+	\end{itemize}
 \end{itemize}
 \end{block}
 \end{frame}
 
+\section{Basic Notation} % (fold)
+\label{sec:notation_and_basics}
+\begin{frame}
+    \frametitle{Logs}    
+    \begin{block}{Definition (Log)}
+    	\begin{itemize}
+			\item A log $L$ is a multi-set of traces $\sigma_i$
+			\item A trace $\sigma_i$ is a finite sequence of activities in $\mathcal{A}$: $\sigma_i \in \mathcal{A}^*$ 
+			\item For simplicity let $\mathcal{A} := \left\{ a, b, c, \dots \right\}$
+    	\end{itemize}
+    \end{block}
+        \begin{block}{Operators}
+    	\begin{itemize}
+			\item We consider a set of operators $\bigoplus = \left\{ \times, \rightarrow, \wedge, \circlearrowleft \right\}$
 
+			\item They define relation between logs (like regular expression on languages)
+			\begin{itemize}
+				\item $\times$: Exclusive choice
+				\item $\rightarrow$: Sequence
+				\item $\wedge$: Parallel
+				\item $\circlearrowleft $: Loop
+			\end{itemize}
+    	\end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+	\item Abstract Representation of a process model
+	\item Represent Regular Expression 
+\end{itemize}
+\frametitle{Process Trees}
+	\begin{figure}[h!]
+	    \centering
+	    \begin{tikzpicture}[nodes={draw, circle}, ->, level 2/.style={sibling distance=15mm}, level distance=0.7cm,]
+	    
+	    \node{$\rightarrow$}
+	    child { node{$a$} } 
+	    child { node {$\circlearrowleft$} 
+	        child { node {$\rightarrow$} 
+	            child {node {$\wedge$}
+	                child {node {$\times$}
+	                    child {node {b}}
+	                    child {node {c}}
+	                }
+	                child {node {d}}
+	            }
+	            child {node {e}}
+	        }
+	        child { node {f} }
+	    }
+	 
+	    \end{tikzpicture}
+		\caption{Process tree to log $L = \left\{ \langle a, c, d, e, f\rangle, \langle a, c, d, e, f, d, b, e, f\rangle, \dots \right\}$}
+		\label{fig:tree}
+	\end{figure}
+\end{frame}
 % section notation_and_basics (end)
-% Final page
+
+
+
+\section{Inductive Mining} % (fold)
+\label{sec:inductive_mining}
+
+\begin{frame}{~}
+	\begin{center}
+		\huge{Inductive Mining}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Inductive Mining} 
+\begin{block}{Idea}
+Log $\rightarrow$ Directly-follows-graph (DFG) $\rightarrow$ Cuts $\rightarrow$ Sub-logs
+\end{block}
+\begin{itemize}
+	\item Consider the log $L_2 = \{ \langle a,b,c,d \rangle^3, \langle a,c,b,d \rangle, \langle a,e,d \rangle^2 \}$
+\end{itemize}
+\begin{figure}[h!]
+    \centering
+        \begin{tikzpicture}[
+            > = stealth, % arrow head style
+            shorten > = 1pt, % don't touch arrow head to node
+            auto,
+            node distance = 1.5cm, % distance between nodes
+            semithick % line style
+        ]
+
+        \tikzstyle{every state}=[
+            draw = black,
+            thick,
+            fill = white,
+            minimum size = 4mm
+        ]
+
+        \node[state] (a) {$a$};
+        \node[state] (c) [right of=a] {$c$};
+        \node[state] (b) [above of=c] {$b$};
+        \node[state] (e) [below of=c] {$e$};
+        \node[state] (d) [right of=c] {$d$};
+
+        \path[->] (a) edge node {} (b);
+        \path[->] (a) edge node {} (c);
+        \path[->] (a) edge node {} (e);
+        \path[->] (c) edge[bend right] node {} (b);
+        \path[->] (b) edge[bend right] node {} (c);
+        \path[->] (b) edge node {} (d);
+        \path[->] (c) edge node {} (d);
+        \path[->] (e) edge node {} (d);
+        
+    \draw[red, dashed] (0.5, 1) -- (0.5, -1);
+    \draw[red, dashed] (2.5, 1) -- (2.5, -1);
+    % \draw[green, dashed] (1, -0.7) -- (2, -0.7);
+    % \draw[blue, dashed] (1, 0.7) -- (2, 0.7);
+    \end{tikzpicture}
+
+    \caption{DFG $ G_L = G(L_2)$ constructed from $L_2$}
+    \label{graph:dfg}
+\end{figure}
+\begin{itemize}
+	\item Found: Sequence Cut: $\rightarrow (a, (bce), d)$ 
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Inductive Mining} 
+\begin{block}{Idea}
+Log $\rightarrow$ Directly-follows-graph (DFG) $\rightarrow$ Cuts $\rightarrow$ Sub-logs
+\end{block}
+\begin{itemize}
+	\item Consider the log $L_2 = \{ \langle a,b,c,d \rangle^3, \langle a,c,b,d \rangle, \langle a,e,d \rangle^2 \}$
+	\item Reminder: $\bigoplus = \left\{ \times, \rightarrow, \wedge, \circlearrowleft \right\}$
+\end{itemize}
+\begin{figure}[h!]
+    \centering
+        \begin{tikzpicture}[
+            > = stealth, % arrow head style
+            shorten > = 1pt, % don't touch arrow head to node
+            auto,
+            node distance = 1.5cm, % distance between nodes
+            semithick % line style
+        ]
+
+        \tikzstyle{every state}=[
+            draw = black,
+            thick,
+            fill = white,
+            minimum size = 4mm
+        ]
+
+        \node[state, draw=blue] (a) {$a$};
+        \node[state] (c) [right of=a] {$c$};
+        \node[state] (b) [above of=c] {$b$};
+        \node[state] (e) [below of=c] {$e$};
+        \node[state, draw=blue] (d) [right of=c] {$d$};
+
+        \path[->] (c) edge[bend right] node {} (b);
+        \path[->] (b) edge[bend right] node {} (c);
+        
+    % \draw[red, dashed] (0.5, 1) -- (0.5, -1);
+    % \draw[red, dashed] (2.5, 1) -- (2.5, -1);
+    \draw[green, dashed] (1, -0.7) -- (2, -0.7);
+    % \draw[blue, dashed] (1, 0.7) -- (2, 0.7);
+    \end{tikzpicture}
+
+    \caption{DFG $ G_L = G(L_2)$ constructed from $L_2$}
+    \label{graph:dfg}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Inductive Mining - Result} 
+\begin{block}{Idea}
+Log $\rightarrow$ Directly-follows-graph (DFG) $\rightarrow$ Cuts $\rightarrow$ Sub-logs
+\end{block}
+\begin{itemize}
+	\item Consider the log $L_2 = \{ \langle a,b,c,d \rangle^3, \langle a,c,b,d \rangle, \langle a,e,d \rangle^2 \}$
+	\item Reminder: $\bigoplus = \left\{ \times, \rightarrow, \wedge, \circlearrowleft \right\}$
+	\item Resulting Tree
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    % \usetikzlibrary{graphdrawing.trees}
+    \begin{tikzpicture}[nodes={draw, circle}, ->, level 2/.style={sibling distance=15mm}, level distance=1.0cm,]
+ 
+    % Tree structure
+    \node{$\rightarrow$}
+    child { node{$a$} } 
+        child { node {$\times$} 
+            child {node {$\wedge$}
+                child {node {b}}
+                child {node {c}}
+            }
+            child {node {e}}
+        }
+    child { node{$d$} } 
+ 
+    \end{tikzpicture}
+\caption{ Process tree $Q_L$ mined from $L_2$ with inductive mining}
+\label{fig:mined_tree}
+\end{figure}
+
+\end{frame}
+% section inductive_mining (end)
+
+\section{Demo} % (fold)
+\label{sec:demo}
+
+% section demo (end)
+\begin{frame}{~}
+	\begin{center}
+		\huge{DEMO}
+	\end{center}
+\end{frame}
+
 \begin{frame}{~}
 	\begin{center}
 		\huge{Thank you for your attention}
